@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "사이트 A",
-  description: "스프링부트 연동 테스트트",
+  description: "스프링부트, Next.js 연동",
 };
 
 export default function RootLayout({
@@ -30,12 +30,16 @@ export default function RootLayout({
       >
         <header>
           <nav className="flex">
-            <Link href="/" className="p-2 rounded hover:bg-gray-100">메인</Link>
-            <Link href="/posts" className="p-2 rounded hover:bg-gray-100">글 목록</Link>
+            <Link href="/" className="p-2 rounded hover:bg-gray-100">
+              메인
+            </Link>
+            <Link href="/posts" className="p-2 rounded hover:bg-gray-100">
+              글 목록
+            </Link>
           </nav>
         </header>
         <main className="flex-1 flex flex-col">{children}</main>
-        <footer className="text-center p-2">footer</footer>
+        <footer className="text-center p-2">푸터</footer>
       </body>
     </html>
   );
