@@ -218,8 +218,9 @@ function PostCommentWriteAndList({
   );
 }
 
-export default function Page({ params }: { params: Promise<{ id: number }> }) {
-  const { id } = use(params);
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id: idStr } = use(params);
+  const id = parseInt(idStr);
 
   const { post, deletePost } = usePost(id);
 
