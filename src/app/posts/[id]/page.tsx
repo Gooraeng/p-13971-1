@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import type { PostWithContentDto } from "@/app/type/post";
-import apiFetch from "@/app/lib/backend/client";
+import { apiFetch } from "@/app/lib/backend/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -43,6 +43,12 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                 >
                     삭제
                 </button>
+                <Link
+                    className="border p-2 rounded"
+                    href={`/posts/${post.id}/edit`}
+                >
+                    수정
+                </Link>
             </div>
         </>
     );

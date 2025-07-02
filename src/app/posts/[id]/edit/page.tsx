@@ -1,10 +1,21 @@
 "use client";
 
+import { useEffect, useState, use } from "react";
+import { PostWithContentDto } from "@/app/type/post";
 import { apiFetch } from "@/app/lib/backend/client";
 import { useRouter } from "next/navigation";
 
-export default function Page() {
+export default function Page({ params }: { params: Promise<{ id: number }> }) {
+    const { id } = use(params);
     const router = useRouter();
+    const [post, setPost] = useState<PostWithContentDto | null>(null);
+
+    useEffect(() => {
+        apiFetch(`/api/v1/posts/${id}`)
+            .then(setPost);
+    }, []);
+
+    if (post == null) return <div>로딩중...</div>
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -32,21 +43,21 @@ export default function Page() {
             return;
         }
 
-        apiFetch(`/api/v1/posts`, {
-            method: "POST",
+        apiFetch(`/api/v1/posts/${id}`, {
+            method: "PUT",
             body: JSON.stringify({
                 title: title,
                 content: content
             })
         }).then((data) => {
             alert(data.msg)
-            router.replace(`/posts/${data.data.id}`)
+            router.replace(`/posts/${id}`)
         })
     }
 
     return (
         <>
-            <h1>글 쓰기</h1>
+            <h1>{id}번 글 수정</h1>
 
             <form className="flex flex-col gap-2" onSubmit={handleSubmit}>
                 <input
@@ -55,16 +66,18 @@ export default function Page() {
                     name="title"
                     placeholder="제목"
                     autoFocus
+                    defaultValue={post.title}
                 />
                 <textarea
                     className="border p-2 rounded"
                     name="content"
                     placeholder="내용"
+                    defaultValue={post.content}
                 />
                 <button className="border p-2 rounded" type="submit">
                     저장
                 </button>
             </form>
         </>
-    );
+    );    
 }
