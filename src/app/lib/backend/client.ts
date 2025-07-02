@@ -11,5 +11,12 @@ export const apiFetch = async(path: string, options?: RequestInit) => {
     }
 
     return fetch(`${NEXT_PUBLIC_API_BASE_URL}${path}`, options)
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) {
+                return res.json().then((errData) => {
+                    throw new Error(errData.data)
+                });
+            }
+            return res.json()
+        })
 }
