@@ -1,6 +1,6 @@
 "use client";
 
-const NEXT_PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+import apiFetch from "@/app/lib/backend/client";
 
 export default function Page() {
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -29,17 +29,15 @@ export default function Page() {
             return;
         }
 
-        fetch(`${NEXT_PUBLIC_API_BASE_URL}/api/v1/posts`, {
+        apiFetch(`/api/v1/posts`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json; charset=utf-8",
-            },
-            body: JSON.stringify({ title: title, content: content }),
-        })
-            .then(response => response.json())
-            .then((data) => {
-                alert(data.msg)
+            body: JSON.stringify({
+                title: title,
+                content: content
             })
+        }).then((data) => {
+            alert(data.msg)
+        })
     }
 
     return (
