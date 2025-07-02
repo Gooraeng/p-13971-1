@@ -116,28 +116,14 @@ function PostInfo({ postState }: { postState: ReturnType<typeof usePost> }) {
   );
 }
 
-function PostCommentWriteAndList({
+function PostCommentWrite({
   id,
   postCommentsState,
 }: {
   id: number;
   postCommentsState: ReturnType<typeof usePostComments>;
 }) {
-  const {
-    postComments,
-    deleteComment: _deleteComment,
-    writeComment,
-  } = postCommentsState;
-
-  if (postComments == null) return <div>로딩중...</div>;
-
-  const deleteComment = (commentId: number) => {
-    if (!confirm(`${commentId}번 댓글을 정말로 삭제하시겠습니까?`)) return;
-
-    _deleteComment(id, commentId, (data) => {
-      alert(data.msg);
-    });
-  };
+  const { writeComment } = postCommentsState;
 
   const handleCommentWriteFormSubmit = (
     e: React.FormEvent<HTMLFormElement>
@@ -186,6 +172,36 @@ function PostCommentWriteAndList({
           작성
         </button>
       </form>
+    </>
+  );
+}
+
+function PostCommentWriteAndList({
+  id,
+  postCommentsState,
+}: {
+  id: number;
+  postCommentsState: ReturnType<typeof usePostComments>;
+}) {
+  const {
+    postComments,
+    deleteComment: _deleteComment,
+    writeComment,
+  } = postCommentsState;
+
+  if (postComments == null) return <div>로딩중...</div>;
+
+  const deleteComment = (commentId: number) => {
+    if (!confirm(`${commentId}번 댓글을 정말로 삭제하시겠습니까?`)) return;
+
+    _deleteComment(id, commentId, (data) => {
+      alert(data.msg);
+    });
+  };
+
+  return (
+    <>
+      <PostCommentWrite id={id} postCommentsState={postCommentsState} />
 
       <h2>댓글 목록</h2>
 
