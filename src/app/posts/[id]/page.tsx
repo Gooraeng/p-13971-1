@@ -2,8 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import type { PostWithContentDto } from "@/app/type/post";
-
-const NEXT_PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+import apiFetch from "@/app/lib/backend/client";
 
 export default function Page({ params }: { params: Promise<{ id: number }> }) {
     const { id } = use(params);
@@ -11,9 +10,8 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
     const [post, setPost] = useState<PostWithContentDto | null>(null);
 
     useEffect(() => {
-    fetch(`${NEXT_PUBLIC_API_BASE_URL}/api/v1/posts/${id}`)
-        .then((res) => res.json())
-        .then(setPost);
+        apiFetch(`/api/v1/posts/${id}`)
+            .then(setPost);
     }, []);
 
     if (post == null) return <div>로딩중...</div>;

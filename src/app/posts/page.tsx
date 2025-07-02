@@ -3,15 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { PostDto } from "../type/post";
-
-const NEXT_PUBLIC_API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+import apiFetch from "../lib/backend/client";
 
 export default function Page() {
   const [posts, setPosts] = useState<PostDto[]>([]);
 
   useEffect(() => {
-    fetch(`${NEXT_PUBLIC_API_BASE_URL}/api/v1/posts`)
-      .then((res) => res.json())
+    apiFetch(`/api/v1/posts`)
       .then(setPosts);
   }, []);
 
