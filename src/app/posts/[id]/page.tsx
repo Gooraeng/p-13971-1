@@ -167,6 +167,63 @@ function PostCommentWrite({
   );
 }
 
+function PostCommentListItem({
+  comment,
+  postCommentsState,
+}: {
+  comment: PostCommentDto;
+  postCommentsState: ReturnType<typeof usePostComments>;
+}) {
+  const [modifyMode, setModifyMode] = useState(false);
+  const { deleteComment: _deleteComment } = postCommentsState;
+
+  const toggleModifyMode = () => {
+    setModifyMode(!modifyMode);
+  };
+
+  const deleteComment = (commentId: number) => {
+    if (!confirm(`${commentId}번 댓글을 정말로 삭제하시겠습니까?`)) return;
+
+    _deleteComment(commentId, (data) => {
+      alert(data.msg);
+    });
+  };
+
+  return (
+    <li className="flex gap-2 items-center">
+      <span>{comment.id} :</span>
+      {!modifyMode && <span>{comment.content}</span>}
+      {modifyMode && (
+        <form
+          className="flex gap-2 items-center"
+          onSubmit={(e) => e.preventDefault()}
+        >
+          <textarea
+            className="border p-2 rounded"
+            name="content"
+            placeholder="댓글 내용"
+            maxLength={100}
+            rows={5}
+            defaultValue={comment.content}
+          />
+          <button className="p-2 rounded border" type="submit">
+            수정
+          </button>
+        </form>
+      )}
+      <button className="p-2 rounded border" onClick={toggleModifyMode}>
+        {modifyMode ? "수정취소" : "수정"}
+      </button>
+      <button
+        className="p-2 rounded border"
+        onClick={() => deleteComment(comment.id)}
+      >
+        삭제
+      </button>
+    </li>
+  );
+}
+
 function PostCommentList({
   postCommentsState,
 }: {
@@ -177,14 +234,6 @@ function PostCommentList({
     postComments,
     deleteComment: _deleteComment,
   } = postCommentsState;
-
-  const deleteComment = (commentId: number) => {
-    if (!confirm(`${commentId}번 댓글을 정말로 삭제하시겠습니까?`)) return;
-
-    _deleteComment(commentId, (data) => {
-      alert(data.msg);
-    });
-  };
 
   if (postComments == null) return <div>로딩중...</div>;
 
@@ -197,17 +246,12 @@ function PostCommentList({
       )}
 
       {postComments != null && postComments.length > 0 && (
-        <ul>
+        <ul className="flex flex-col gap-2">
           {postComments.map((comment) => (
-            <li key={comment.id}>
-              {comment.id} : {comment.content}
-              <button
-                className="p-2 rounded border"
-                onClick={() => deleteComment(comment.id)}
-              >
-                삭제
-              </button>
-            </li>
+            <PostCommentListItem
+              comment={comment}
+              postCommentsState={postCommentsState} 
+            />
           ))}
         </ul>
       )}
