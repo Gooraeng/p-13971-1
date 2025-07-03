@@ -4,7 +4,7 @@ import { apiFetch } from "@/lib/backend/client";
 import type { PostCommentDto, PostWithContentDto } from "@/type/post";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { use, useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 
 function usePost(id: number) {
   const [post, setPost] = useState<PostWithContentDto | null>(null);
@@ -69,21 +69,33 @@ function usePostComments(postId: number) {
     });
   };
 
-  const modifyComment = (content: string, onSuccess: (data: any) => void) => {
-    apiFetch(`/api/v1/posts/${postId}/comments`, {
+  const modifyComment = (
+    commentId: number,
+    content: string,
+    onSuccess: (data: any) => void
+  ) => {
+    apiFetch(`/api/v1/posts/${postId}/comments/${commentId}`, {
       method: "PUT",
-      body: JSON.stringify({
-        content,
-      }),
-    }).then(onSuccess)
+      body: JSON.stringify({ content }),
+    }).then((data) => {
+      if (postComments == null) return;
+
+      setPostComments(
+        postComments.map((comment) =>
+          comment.id === commentId ? { ...comment, content } : comment
+        )
+      );
+
+      onSuccess(data);
+    });
   };
-  
+
   return {
     postId,
     postComments,
     deleteComment,
     writeComment,
-    modifyComment
+    modifyComment,
   };
 }
 
@@ -161,7 +173,10 @@ function PostCommentWrite({
     <>
       <h2>{postId}번글에 대한 댓글 작성</h2>
 
-      <form className="p-2" onSubmit={handleCommentWriteFormSubmit}>
+      <form
+        className="flex gap-2 items-center"
+        onSubmit={handleCommentWriteFormSubmit}
+      >
         <textarea
           className="border p-2 rounded"
           name="content"
@@ -177,18 +192,31 @@ function PostCommentWrite({
   );
 }
 
-function PostCommentModifyForm({
+function PostCommentListItem({
   comment,
-  postCommentsState
+  postCommentsState,
 }: {
   comment: PostCommentDto;
-  postCommentsState : ReturnType<typeof usePostComments>;
+  postCommentsState: ReturnType<typeof usePostComments>;
 }) {
-  const { modifyComment } = postCommentsState;
+  const [modifyMode, setModifyMode] = useState(false);
+  const { deleteComment: _deleteComment, modifyComment } = postCommentsState;
 
-  const onModifySubmit = (e : React.FormEvent<HTMLFormElement>) => {
+  const toggleModifyMode = () => {
+    setModifyMode(!modifyMode);
+  };
+
+  const deleteComment = (commentId: number) => {
+    if (!confirm(`${commentId}번 댓글을 정말로 삭제하시겠습니까?`)) return;
+
+    _deleteComment(commentId, (data) => {
+      alert(data.msg);
+    });
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     const form = e.target as HTMLFormElement;
 
     const contentTextarea = form.elements.namedItem(
@@ -209,61 +237,33 @@ function PostCommentModifyForm({
       return;
     }
 
-    modifyComment(contentTextarea.value, (data) => {
+    modifyComment(comment.id, contentTextarea.value, (data) => {
       alert(data.msg);
-      contentTextarea.value = "";
-    });
-  }
-
-  return (
-    <form
-      className="flex gap-2 items-center"
-      onSubmit={onModifySubmit}
-    >
-      <textarea
-        className="border p-2 rounded"
-        name="content"
-        placeholder="댓글 내용"
-        maxLength={100}
-        rows={5}
-        defaultValue={comment.content}
-        autoFocus
-      />
-      <button className="p-2 rounded border" type="submit">
-        수정
-      </button>
-    </form>
-  );
-}
-
-function PostCommentListItem({
-  comment,
-  postCommentsState,
-}: {
-  comment: PostCommentDto;
-  postCommentsState: ReturnType<typeof usePostComments>;
-}) {
-  const [modifyMode, setModifyMode] = useState(false);
-  const { deleteComment: _deleteComment } = postCommentsState;
-
-  const toggleModifyMode = () => {
-    setModifyMode(!modifyMode);
-  };
-
-  const deleteComment = (commentId: number) => {
-    if (!confirm(`${commentId}번 댓글을 정말로 삭제하시겠습니까?`)) return;
-
-    _deleteComment(commentId, (data) => {
-      alert(data.msg);
+      toggleModifyMode();
     });
   };
 
   return (
-    <li key={comment.id} className="flex gap-2 items-center">
+    <li className="flex gap-2 items-start">
       <span>{comment.id} :</span>
-      {!modifyMode && <span>{comment.content}</span>}
+      {!modifyMode && (
+        <span style={{ whiteSpace: "pre-line" }}>{comment.content}</span>
+      )}
       {modifyMode && (
-        <PostCommentModifyForm comment={comment} postCommentsState={postCommentsState} />
+        <form className="flex gap-2 items-start" onSubmit={handleSubmit}>
+          <textarea
+            className="border p-2 rounded"
+            name="content"
+            placeholder="댓글 내용"
+            maxLength={100}
+            rows={5}
+            defaultValue={comment.content}
+            autoFocus
+          />
+          <button className="p-2 rounded border" type="submit">
+            저장
+          </button>
+        </form>
       )}
       <button className="p-2 rounded border" onClick={toggleModifyMode}>
         {modifyMode ? "수정취소" : "수정"}
@@ -283,11 +283,7 @@ function PostCommentList({
 }: {
   postCommentsState: ReturnType<typeof usePostComments>;
 }) {
-  const {
-    postId,
-    postComments,
-    deleteComment: _deleteComment,
-  } = postCommentsState;
+  const { postId, postComments } = postCommentsState;
 
   if (postComments == null) return <div>로딩중...</div>;
 
@@ -300,11 +296,12 @@ function PostCommentList({
       )}
 
       {postComments != null && postComments.length > 0 && (
-        <ul className="flex flex-col gap-2">
+        <ul className="mt-2 flex flex-col gap-2">
           {postComments.map((comment) => (
             <PostCommentListItem
+              key={comment.id}
               comment={comment}
-              postCommentsState={postCommentsState} 
+              postCommentsState={postCommentsState}
             />
           ))}
         </ul>
