@@ -4,7 +4,7 @@ import { apiFetch } from "@/lib/backend/client";
 import type { PostCommentDto, PostWithContentDto } from "@/type/post";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { use, useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 
 function usePost(id: number) {
   const [post, setPost] = useState<PostWithContentDto | null>(null);
@@ -69,11 +69,21 @@ function usePostComments(postId: number) {
     });
   };
 
+  const modifyComment = (content: string, onSuccess: (data: any) => void) => {
+    apiFetch(`/api/v1/posts/${postId}/comments`, {
+      method: "PUT",
+      body: JSON.stringify({
+        content,
+      }),
+    }).then(onSuccess)
+  };
+  
   return {
     postId,
     postComments,
     deleteComment,
     writeComment,
+    modifyComment
   };
 }
 
@@ -167,6 +177,65 @@ function PostCommentWrite({
   );
 }
 
+function PostCommentModifyForm({
+  comment,
+  postCommentsState
+}: {
+  comment: PostCommentDto;
+  postCommentsState : ReturnType<typeof usePostComments>;
+}) {
+  const { modifyComment } = postCommentsState;
+
+  const onModifySubmit = (e : React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    const form = e.target as HTMLFormElement;
+
+    const contentTextarea = form.elements.namedItem(
+      "content"
+    ) as HTMLTextAreaElement;
+
+    contentTextarea.value = contentTextarea.value.trim();
+
+    if (contentTextarea.value.length === 0) {
+      alert("댓글 내용을 입력해주세요.");
+      contentTextarea.focus();
+      return;
+    }
+
+    if (contentTextarea.value.length < 2) {
+      alert("댓글 내용을 2자 이상 입력해주세요.");
+      contentTextarea.focus();
+      return;
+    }
+
+    modifyComment(contentTextarea.value, (data) => {
+      alert(data.msg);
+      contentTextarea.value = "";
+    });
+  }
+
+  return (
+    <form
+      className="flex gap-2 items-center"
+      onSubmit={onModifySubmit}
+    >
+      <textarea
+        className="border p-2 rounded"
+        name="content"
+        placeholder="댓글 내용"
+        maxLength={100}
+        rows={5}
+        defaultValue={comment.content}
+        autoFocus
+      />
+      <button className="p-2 rounded border" type="submit">
+        수정
+      </button>
+    </form>
+  );
+}
+
 function PostCommentListItem({
   comment,
   postCommentsState,
@@ -190,26 +259,11 @@ function PostCommentListItem({
   };
 
   return (
-    <li className="flex gap-2 items-center">
+    <li key={comment.id} className="flex gap-2 items-center">
       <span>{comment.id} :</span>
       {!modifyMode && <span>{comment.content}</span>}
       {modifyMode && (
-        <form
-          className="flex gap-2 items-center"
-          onSubmit={(e) => e.preventDefault()}
-        >
-          <textarea
-            className="border p-2 rounded"
-            name="content"
-            placeholder="댓글 내용"
-            maxLength={100}
-            rows={5}
-            defaultValue={comment.content}
-          />
-          <button className="p-2 rounded border" type="submit">
-            수정
-          </button>
-        </form>
+        <PostCommentModifyForm comment={comment} postCommentsState={postCommentsState} />
       )}
       <button className="p-2 rounded border" onClick={toggleModifyMode}>
         {modifyMode ? "수정취소" : "수정"}
